@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IEEE Report Restructurer</title>
+    <meta name="description" content="Transform your project reports into IEEE-formatted academic documents">
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 12H15M9 16H15M17 21H7C5.89543 21 5 20.1046 5 19V5C5 3.89543 5.89543 3 7 3H12.5858C12.851 3 13.1054 3.10536 13.2929 3.29289L18.7071 8.70711C18.8946 8.89464 19 9.149 19 9.41421V19C19 20.1046 18.1046 21 17 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M13 3V8C13 8.55228 13.4477 9 14 9H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="logo-text">IEEE Report Restructurer</span>
+            </div>
+            <nav class="nav">
+                <a href="#" class="nav-link active">Upload</a>
+                <a href="#" class="nav-link" id="nav-preview" style="display: none;">Preview</a>
+            </nav>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Upload Section -->
+            <section id="upload-section" class="section upload-section">
+                <div class="upload-container">
+                    <div class="upload-header">
+                        <h1>Transform Your Report</h1>
+                        <p>Upload your project report and we'll restructure it into proper IEEE format with balanced section word counts, academic tone, and correct numbering.</p>
+                    </div>
+                    
+                    <div class="upload-zone" id="upload-zone">
+                        <div class="upload-icon">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M7 10V9C7 6.23858 9.23858 4 12 4C14.7614 4 17 6.23858 17 9V10C19.2091 10 21 11.7909 21 14C21 16.2091 19.2091 18 17 18H15M7 10C4.79086 10 3 11.7909 3 14C3 16.2091 4.79086 18 7 18H9M7 10C7.43285 10 7.84965 10.0688 8.24006 10.1959M12 12V20M12 12L15 15M12 12L9 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <h3>Drop your file here</h3>
+                        <p>or <span class="upload-browse">browse</span> to upload</p>
+                        <p class="upload-formats">Supports: DOCX, PDF (max 50MB)</p>
+                        <input type="file" id="file-input" accept=".docx,.pdf" hidden>
+                    </div>
+
+                    <div class="file-info" id="file-info" style="display: none;">
+                        <div class="file-icon">📄</div>
+                        <div class="file-details">
+                            <span class="file-name" id="file-name"></span>
+                            <span class="file-size" id="file-size"></span>
+                        </div>
+                        <button class="btn-remove" id="btn-remove">✕</button>
+                    </div>
+
+                    <button class="btn-primary" id="btn-process" disabled>
+                        <span class="btn-text">Process Document</span>
+                        <span class="btn-loader" style="display: none;"></span>
+                    </button>
+                </div>
+
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">📝</div>
+                        <h4>Academic Rewriting</h4>
+                        <p>Transforms content into formal academic tone with improved clarity</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h4>Word Count Balance</h4>
+                        <p>Ensures each section has 200-400 words for proper balance</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔢</div>
+                        <h4>IEEE Numbering</h4>
+                        <p>Automatically applies I, II, III format for main sections</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📚</div>
+                        <h4>Reference Formatting</h4>
+                        <p>Converts citations to proper IEEE numbered style</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Processing Section -->
+            <section id="processing-section" class="section processing-section" style="display: none;">
+                <div class="processing-container">
+                    <div class="processing-animation">
+                        <div class="processing-circle"></div>
+                        <div class="processing-circle"></div>
+                        <div class="processing-circle"></div>
+                    </div>
+                    <h2 id="processing-title">Processing Your Document</h2>
+                    <p id="processing-status">Uploading file...</p>
+                    
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                        <span class="progress-text" id="progress-text">0%</span>
+                    </div>
+
+                    <div class="processing-steps">
+                        <div class="step" id="step-1">
+                            <div class="step-indicator"></div>
+                            <span>Extracting text</span>
+                        </div>
+                        <div class="step" id="step-2">
+                            <div class="step-indicator"></div>
+                            <span>Detecting sections</span>
+                        </div>
+                        <div class="step" id="step-3">
+                            <div class="step-indicator"></div>
+                            <span>Rewriting content</span>
+                        </div>
+                        <div class="step" id="step-4">
+                            <div class="step-indicator"></div>
+                            <span>Applying IEEE format</span>
+                        </div>
+                        <div class="step" id="step-5">
+                            <div class="step-indicator"></div>
+                            <span>Generating document</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Preview Section -->
+            <section id="preview-section" class="section preview-section" style="display: none;">
+                <div class="preview-header">
+                    <h2>Document Preview</h2>
+                    <div class="preview-actions">
+                        <button class="btn-secondary" id="btn-edit-toggle">
+                            <span>Edit Sections</span>
+                        </button>
+                        <button class="btn-primary" id="btn-download-docx">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                            </svg>
+                            Download DOCX
+                        </button>
+                        <button class="btn-primary btn-pdf" id="btn-download-pdf">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                            </svg>
+                            Download PDF
+                        </button>
+                    </div>
+                </div>
+
+                <div class="preview-stats" id="preview-stats">
+                    <div class="stat-card">
+                        <span class="stat-value" id="stat-sections">0</span>
+                        <span class="stat-label">Sections</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value" id="stat-words">0</span>
+                        <span class="stat-label">Total Words</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value" id="stat-balanced">0</span>
+                        <span class="stat-label">Balanced Sections</span>
+                    </div>
+                </div>
+
+                <div class="context-panel" id="context-panel">
+                    <h3>Document Context</h3>
+                    <div class="context-grid">
+                        <div class="context-item">
+                            <label>Title</label>
+                            <p id="ctx-title">-</p>
+                        </div>
+                        <div class="context-item">
+                            <label>Domain</label>
+                            <p id="ctx-domain">-</p>
+                        </div>
+                        <div class="context-item">
+                            <label>Objective</label>
+                            <p id="ctx-objective">-</p>
+                        </div>
+                        <div class="context-item">
+                            <label>Keywords</label>
+                            <p id="ctx-keywords">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sections-container" id="sections-container">
+                    <!-- Sections will be dynamically added here -->
+                </div>
+
+                <div class="preview-footer">
+                    <button class="btn-secondary" id="btn-start-over">
+                        Start Over
+                    </button>
+                    <button class="btn-primary" id="btn-regenerate" style="display: none;">
+                        Regenerate Document
+                    </button>
+                </div>
+            </section>
+
+            <!-- Error Section -->
+            <section id="error-section" class="section error-section" style="display: none;">
+                <div class="error-container">
+                    <div class="error-icon">⚠️</div>
+                    <h2>Processing Failed</h2>
+                    <p id="error-message">An error occurred while processing your document.</p>
+                    <button class="btn-primary" id="btn-try-again">Try Again</button>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>IEEE Report Restructurer v1.0 | Powered by Groq LLM</p>
+        </footer>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

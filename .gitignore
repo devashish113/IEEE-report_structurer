@@ -1,0 +1,68 @@
+# Git ignore for IEEE Report Restructurer
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+build/
+
+# Coverage
+htmlcov/
+.coverage
+.tox/
+.nox/
+
+# Logs
+*.log
+logs/
+
+# Local data
+data/
+backend/uploads/*
+backend/outputs/*
+!backend/uploads/.gitkeep
+!backend/outputs/.gitkeep
+
+# Documentation
+docs/_build/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Node modules
+node_modules/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Keep empty directories
+!.gitkeep
