@@ -22,10 +22,10 @@ class Settings(BaseSettings):
     output_dir: str = "outputs"
     
     # Word Count Thresholds (IEEE Section Length Control)
-    # Expanded thresholds to preserve more content
-    min_section_words: int = 250  # Expand if below this
-    max_section_words: int = 600  # Compress only if above this
-    target_section_words: int = 400  # Target words per section
+    # Must match frontend green zone: 200–400 words
+    min_section_words: int = 200  # Expand if below this
+    max_section_words: int = 400  # Compress only if above this
+    target_section_words: int = 300  # Target words per major section
     
     # LLM Settings
     max_retries: int = 3

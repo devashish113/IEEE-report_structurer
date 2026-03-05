@@ -18,6 +18,7 @@ from ..services.context_extractor import ContextExtractor
 from ..services.llm_service import LLMService
 from ..services.ieee_formatter import IEEEFormatter
 from ..services.export_service import ExportService
+from ..services.post_processor import PostProcessor
 from ..config import get_settings
 
 
@@ -33,6 +34,7 @@ llm_service = LLMService()
 context_extractor = ContextExtractor(llm_service)
 ieee_formatter = IEEEFormatter()
 export_service = ExportService()
+post_processor = PostProcessor()
 
 
 # Request/Response models
@@ -214,7 +216,12 @@ async def process_document_task(doc_id: str, options: ProcessingOptions):
             for warning in validation_report["warnings"]:
                 doc.add_error(f"Warning: {warning}")
         
-        # Step 6: Generate output
+        # Step 6: Post-processing (final cleanup + word count logging)
+        doc.update_status(ProcessingStatus.STRUCTURING, "Running post-processing checks...", 82)
+        sections, word_count_log = post_processor.run_post_processing(sections)
+        doc.sections = sections
+        
+        # Step 7: Generate output
         doc.update_status(ProcessingStatus.FORMATTING, "Generating IEEE document...", 85)
         
         result = export_service.generate_both_formats(doc, sections, context)

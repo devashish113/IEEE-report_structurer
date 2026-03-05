@@ -64,14 +64,16 @@ ORIGINAL CONTENT:
 
 CRITICAL REQUIREMENTS:
 1. PRESERVE ALL original information - do NOT shorten or remove content
-2. Use formal academic language (third person, passive voice where appropriate)
-3. Maintain all technical accuracy and meaning
-4. Remove any informal language, contractions, or colloquialisms
-5. Improve clarity and logical flow
-6. Use consistent terminology
-7. Target approximately {target_words} words (but prioritize content preservation)
-8. Ensure smooth paragraph transitions
-9. You may ADD clarifying phrases but NEVER remove technical details
+2. Your output MUST be at least as long as the original. Do NOT summarize or compress.
+3. Use formal academic language (third person, passive voice where appropriate)
+4. Maintain all technical accuracy and meaning
+5. Remove any informal language, contractions, or colloquialisms
+6. Improve clarity and logical flow
+7. Use consistent terminology
+8. Target approximately {target_words} words (but prioritize content preservation over word count)
+9. Ensure smooth paragraph transitions
+10. You may ADD clarifying phrases but NEVER remove technical details
+11. If the original is longer than the target, keep all content — do NOT truncate
 
 Return ONLY the rewritten content, no explanations or headers."""
 
@@ -146,6 +148,8 @@ Return ONLY the compressed content, no explanations."""
 # Reference formatting prompt
 REFERENCE_FORMAT_PROMPT = """You are an expert in IEEE reference formatting. Convert the following references to proper IEEE numbered format.
 
+IMPORTANT: Do NOT rewrite, paraphrase, or change the content of any reference. Only reformat the numbering and author name layout.
+
 ORIGINAL REFERENCES:
 {references}
 
@@ -157,6 +161,8 @@ IEEE FORMAT REQUIREMENTS:
 5. Journal/conference names in italics (indicate with *name*)
 6. Include volume, issue, pages, year
 7. For websites: include URL and access date
+8. Do NOT add, remove, or paraphrase any reference — only reformat
+9. Preserve all original information from each reference exactly
 
 Example IEEE format:
 [1] A. B. Author and C. D. Author, "Article title," *Journal Name*, vol. X, no. Y, pp. 1-10, Year.

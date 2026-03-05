@@ -5,6 +5,7 @@ Handles all interactions with the Groq API for text generation.
 
 import asyncio
 import json
+import logging
 import os
 import re
 from typing import Optional, List
@@ -14,6 +15,8 @@ from groq import AsyncGroq
 from ..config import get_settings
 from ..models.section import Section, IEEECategory
 from ..models.document import GlobalContext
+
+logger = logging.getLogger(__name__)
 from ..prompts.templates import (
     SECTION_REWRITE_PROMPT,
     SECTION_EXPAND_PROMPT,
@@ -31,6 +34,8 @@ SKIP_REWRITE_TITLES = [
     "appendix",
     "code",
     "logs",
+    "abstract",
+    "index terms",
 ]
 
 # LLM timeout in seconds
@@ -440,15 +445,17 @@ class LLMService:
             original_word_count = section.word_count or len(section.original_content.split())
             
             # Categories to never rewrite or expand/compress
-            skip_categories = [
-                IEEECategory.REFERENCES, 
-                IEEECategory.TITLE, 
-                IEEECategory.KEYWORDS,
-                IEEECategory.ABSTRACT
+            # Note: section.category is a string due to Pydantic use_enum_values=True
+            skip_category_values = [
+                IEEECategory.REFERENCES.value,
+                IEEECategory.TITLE.value,
+                IEEECategory.KEYWORDS.value,
+                IEEECategory.ABSTRACT.value,
             ]
             
             # Skip sections by category (Abstract, Index Terms, References)
-            if section.category in skip_categories:
+            cat_value = section.category if isinstance(section.category, str) else section.category.value
+            if cat_value in skip_category_values:
                 section.rewritten_content = section.original_content
                 section.is_processed = True
                 word_count_log.append({
@@ -519,7 +526,7 @@ class LLMService:
                     "final": original_word_count,
                     "action": f"failed: {str(e)[:50]}"
                 })
-                print(f"Warning: Failed to rewrite section '{section.title}': {e}")
+                logger.warning(f"Failed to rewrite section '{section.title}': {e}")
             
             if callback:
                 await callback(index, len(sections))
@@ -531,10 +538,10 @@ class LLMService:
         processed_sections = await asyncio.gather(*tasks)
         
         # Print word count summary
-        print("\n=== Section Word Count Summary ===")
+        logger.info("=== Section Word Count Summary ===")
         for log in word_count_log:
-            print(f"  {log['section']}: {log['original']} -> {log['final']} words ({log['action']})")
-        print("==================================\n")
+            logger.info(f"  {log['section']}: {log['original']} -> {log['final']} words ({log['action']})")
+        logger.info("==================================")
         
         return list(processed_sections)
 

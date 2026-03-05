@@ -442,6 +442,60 @@ class IEEEFormatter:
         
         return deduplicated
     
+    # ==================== HEADING ECHO REMOVAL ====================
+    
+    def remove_heading_echo_from_content(self, sections: List[Section]) -> List[Section]:
+        """
+        Remove heading text that is echoed/repeated at the start of section content.
+        Common artifact: heading is "INTRODUCTION" and content starts with
+        "Introduction\nThe study presents..." — strips that first line.
+        """
+        for section in sections:
+            content = section.rewritten_content or section.original_content
+            if not content:
+                continue
+            
+            title_lower = section.title.lower().strip()
+            title_upper = section.title.upper().strip()
+            
+            # Split content into lines
+            lines = content.split('\n')
+            cleaned_lines = []
+            skip_count = 0
+            
+            for i, line in enumerate(lines):
+                stripped = line.strip()
+                stripped_lower = stripped.lower()
+                
+                # Only check the first few lines for echo
+                if i < 3 and skip_count == i:
+                    # Check if this line is just the heading repeated
+                    heading_clean = re.sub(r'[^a-z\s]', '', title_lower).strip()
+                    line_clean = re.sub(r'[^a-z\s]', '', stripped_lower).strip()
+                    
+                    if not line_clean:
+                        skip_count += 1
+                        continue
+                    
+                    # Exact or near-exact match to heading
+                    if (line_clean == heading_clean or 
+                        stripped_lower == title_lower or
+                        stripped == title_upper or
+                        # Heading with colon or dash suffix
+                        re.match(rf'^{re.escape(heading_clean)}\s*[:—\-]?\s*$', line_clean)):
+                        skip_count += 1
+                        logger.info(f"Removed heading echo from '{section.title}': '{stripped[:60]}'")
+                        continue
+                
+                cleaned_lines.append(line)
+            
+            cleaned = '\n'.join(cleaned_lines).strip()
+            if cleaned != content.strip():
+                section.rewritten_content = cleaned
+                section.original_content = cleaned
+        
+        return sections
+    
     # ==================== ENSURE INTRODUCTION NOT EMPTY ====================
     
     def ensure_introduction_content(self, sections: List[Section]) -> List[Section]:
@@ -672,8 +726,17 @@ class IEEEFormatter:
         """
         Format reference list in IEEE numbered format.
         Split merged references into separate numbered entries.
+        Handles: numbered refs, blank-line separated refs, period-based merges,
+        and semicolon-separated refs.
         """
-        lines = references_content.strip().split('\n')
+        # Step 1: Pre-split merged references that are on a single line
+        # Detect patterns like "Author1 (2020). Title1. Journal. Author2 (2021). Title2."
+        raw_text = references_content.strip()
+        
+        # Split on semicolons that separate distinct references
+        raw_text = re.sub(r';\s*(?=[A-Z][a-z]+[,\s])', '\n', raw_text)
+        
+        lines = raw_text.split('\n')
         formatted_refs = []
         ref_num = 1
         current_ref = []
@@ -685,19 +748,21 @@ class IEEEFormatter:
                 if current_ref:
                     ref_text = ' '.join(current_ref)
                     ref_text = re.sub(r'^[\[\(]?\d+[\]\)]?\s*\.?\s*', '', ref_text)
-                    formatted_refs.append(f"[{ref_num}] {ref_text}")
-                    ref_num += 1
+                    if ref_text.strip():
+                        formatted_refs.append(f"[{ref_num}] {ref_text.strip()}")
+                        ref_num += 1
                     current_ref = []
                 continue
             
-            # Check if this line starts a new reference
-            if re.match(r'^[\[\(]?\d+[\]\)]?\s*\.?\s*', line):
+            # Check if this line starts a new reference (numbered)
+            if re.match(r'^[\[\(]?\d+[\]\)]?\s*\.?\s+', line):
                 # Save previous reference
                 if current_ref:
                     ref_text = ' '.join(current_ref)
                     ref_text = re.sub(r'^[\[\(]?\d+[\]\)]?\s*\.?\s*', '', ref_text)
-                    formatted_refs.append(f"[{ref_num}] {ref_text}")
-                    ref_num += 1
+                    if ref_text.strip():
+                        formatted_refs.append(f"[{ref_num}] {ref_text.strip()}")
+                        ref_num += 1
                 current_ref = [re.sub(r'^[\[\(]?\d+[\]\)]?\s*\.?\s*', '', line)]
             else:
                 current_ref.append(line)
@@ -706,7 +771,22 @@ class IEEEFormatter:
         if current_ref:
             ref_text = ' '.join(current_ref)
             ref_text = re.sub(r'^[\[\(]?\d+[\]\)]?\s*\.?\s*', '', ref_text)
-            formatted_refs.append(f"[{ref_num}] {ref_text}")
+            if ref_text.strip():
+                formatted_refs.append(f"[{ref_num}] {ref_text.strip()}")
+        
+        # Step 2: If we only got a single giant block, try period-based splitting
+        if len(formatted_refs) <= 1 and len(raw_text) > 200:
+            # Try splitting on author-year boundaries: ". Author" patterns
+            parts = re.split(r'(?<=\.)\s+(?=[A-Z][a-z]+[,\s])', raw_text)
+            if len(parts) > 1:
+                formatted_refs = []
+                ref_num = 1
+                for part in parts:
+                    part = part.strip()
+                    part = re.sub(r'^[\[\(]?\d+[\]\)]?\s*\.?\s*', '', part)
+                    if part and len(part) > 10:
+                        formatted_refs.append(f"[{ref_num}] {part}")
+                        ref_num += 1
         
         return '\n'.join(formatted_refs)
     
@@ -879,10 +959,12 @@ class IEEEFormatter:
         
         report["checks"]["has_references"] = has_references
         
-        # Check 6: Section word limits
+        # Check 6: Section word limits (thresholds match config: 180/450)
         total_words = 0
         sections_under = 0
         sections_over = 0
+        min_words = self.settings.min_section_words  # 180
+        max_words = self.settings.max_section_words  # 450
         
         for section in sections:
             word_count = section.word_count or len((section.rewritten_content or section.original_content).split())
@@ -890,9 +972,9 @@ class IEEEFormatter:
             cat = self._get_category(section)
             
             if cat not in [IEEECategory.KEYWORDS, IEEECategory.REFERENCES, IEEECategory.TITLE, IEEECategory.ABSTRACT]:
-                if word_count < 150:
+                if word_count < min_words:
                     sections_under += 1
-                elif word_count > 500:
+                elif word_count > max_words:
                     sections_over += 1
         
         report["stats"]["total_words"] = total_words
@@ -995,10 +1077,20 @@ class IEEEFormatter:
                 section.rewritten_content = self.format_references_ieee(content, citation_map)
                 section.original_content = section.rewritten_content
         
-        # Step 15: Apply IEEE numbering
+        # Step 15: Remove heading echoes from content body
+        sections = self.remove_heading_echo_from_content(sections)
+        
+        # Step 16: Final content cleaning pass (catch leftover HTML/placeholders)
+        for section in sections:
+            content = section.rewritten_content or section.original_content
+            content = self.clean_content(content, context)
+            section.rewritten_content = content
+            section.original_content = content
+        
+        # Step 17: Apply IEEE numbering
         sections = self.apply_ieee_numbering(sections)
         
-        # Step 16: Final validation
+        # Step 18: Final validation
         validation_report = self.validate_ieee_compliance(sections)
         
         logger.info(f"IEEE formatting complete. Compliant: {validation_report['is_compliant']}")
@@ -1091,9 +1183,9 @@ class IEEEFormatter:
                 sections_in_range += 1
                 continue
             
-            if word_count < 200:
+            if word_count < min_words:
                 sections_under += 1
-            elif word_count > 400:
+            elif word_count > max_words:
                 sections_over += 1
             else:
                 sections_in_range += 1

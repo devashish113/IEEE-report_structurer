@@ -193,7 +193,9 @@ class ExportService:
             for line in content.split('\n'):
                 if line.strip():
                     ref_para = doc.add_paragraph()
-                    ref_para.add_run(line.strip()).font.size = Pt(8)
+                    ref_run = ref_para.add_run(line.strip())
+                    ref_run.font.size = Pt(8)
+                    ref_run.font.name = 'Times New Roman'
                     ref_para.paragraph_format.left_indent = Inches(0.25)
                     ref_para.paragraph_format.first_line_indent = Inches(-0.25)
                     
